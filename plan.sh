@@ -4,6 +4,8 @@ pkg_version="0.23.3"
 pkg_maintainer="The Habitat Maintainers <humans@habitat.sh>"
 pkg_license=("GPL-2.0")
 
+pkg_bin_dirs=(bin)
+
 pkg_build_deps=(
     core/make
     core/gcc
