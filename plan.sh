@@ -35,9 +35,7 @@ do_build() {
         --with-libiconv-prefix="$(pkg_path_for libiconv)" \
         --with-libintl-prefix="$(pkg_path_for gettext)/share/gettext/intl" \
         --with-ssl=openssl \
-        --with-libxml2 | less
-
-    attach
+        --with-libxml2
 
     make
 }
