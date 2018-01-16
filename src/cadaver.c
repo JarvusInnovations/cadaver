@@ -1,18 +1,18 @@
-/* 
+/*
    cadaver, command-line DAV client
-   Copyright (C) 1999-2007, Joe Orton <joe@manyfish.co.uk>, 
+   Copyright (C) 1999-2007, Joe Orton <joe@manyfish.co.uk>,
    except where otherwise indicated.
-                                                                     
+
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
-  
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-  
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -32,16 +32,15 @@
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
-#endif 
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#ifdef HAVE_LOCALE_H
+
 #include <locale.h>
-#endif
 
 
 #include <errno.h>
@@ -109,7 +108,7 @@ static enum out_state {
     out_transfer_plain, /* doing a plain ... transfer */
     out_transfer_pretty, /* doing a pretty progress bar transfer */
     out_transfer_done /* a complete transfer */
-} out_state;   
+} out_state;
 
 /* Protoypes */
 
@@ -117,7 +116,7 @@ static RETSIGTYPE quit_handler(int signo);
 
 static int execute_command(const char *line);
 
-static void notifier(void *ud, ne_session_status status, 
+static void notifier(void *ud, ne_session_status status,
                      const ne_session_status_info *info);
 static void pretty_progress_bar(ne_off_t progress, ne_off_t total);
 static int supply_creds_server(void *userdata, const char *realm, int attempt,
@@ -240,15 +239,15 @@ static void provide_clicert(void *userdata, ne_session *sess,
         free(dn);
     }
 #endif
-    
+
     if (ne_ssl_clicert_encrypted(client_cert)) {
         const char *name = ne_ssl_clicert_name(client_cert);
         char *pass;
-        
+
         if (!name) name = ccfn;
-        
+
         printf("Client certificate `%s' is encrypted.\n", name);
-        
+
         for (n = 0; n < 3; n++) {
             pass = fm_getpassword(_("Decryption password: "));
             if (pass == NULL) break;
@@ -259,12 +258,12 @@ static void provide_clicert(void *userdata, ne_session *sess,
             }
         }
     }
-    
+
     if (!ne_ssl_clicert_encrypted(client_cert)) {
         printf("Using client certificate.\n");
         ne_ssl_set_clicert(session.sess, client_cert);
     }
-    
+
 }
 
 static int setup_ssl(void)
@@ -272,7 +271,7 @@ static int setup_ssl(void)
     char *ccfn = get_option(opt_clicert);
 
     ne_ssl_trust_default_ca(session.sess);
-	      
+
     ne_ssl_set_verify(session.sess, cert_verify, NULL);
 
     if (ccfn) {
@@ -343,7 +342,7 @@ void open_connection(const char *url)
     session.sess = ne_session_create(session.uri.scheme, session.uri.host,
                                      session.uri.port);
     sess = session.sess;
-    
+
     if (use_ssl && setup_ssl()) {
 	return;
     }
@@ -392,13 +391,13 @@ void open_connection(const char *url)
     ne_set_useragent(session.sess, "cadaver/" PACKAGE_VERSION);
     ne_set_server_auth(session.sess, supply_creds_server, NULL);
     ne_set_proxy_auth(session.sess, supply_creds_proxy, NULL);
-    
+
     if (proxy_host) {
 	ne_session_proxy(session.sess, proxy_hostname, proxy_port);
     }
 
     ret = ne_options(session.sess, session.uri.path, &caps);
-    
+
     switch (ret) {
     case NE_OK:
 	session.connected = true;
@@ -425,8 +424,8 @@ void open_connection(const char *url)
     }
 
 }
-       
-/* Sets proxy server from hostport argument */    
+
+/* Sets proxy server from hostport argument */
 static void set_proxy(const char *str)
 {
     char *hostname = ne_strdup(str), *pnt;
@@ -461,7 +460,7 @@ static void parse_args(int argc, char **argv)
 	case 'k': insecure = 1; break;
 	case 'r': rcfile = strdup(optarg); break;
 	case 'c': cmd = strdup(optarg); break;
-	case '?': 
+	case '?':
 	default:
 	    printf(_("Try `%s --help' for more information.\n"), progname);
 	    exit(-1);
@@ -470,7 +469,7 @@ static void parse_args(int argc, char **argv)
     if (optind == (argc-1)) {
 	open_connection(argv[optind]);
 #ifdef HAVE_ADD_HISTORY
-	{ 
+	{
 	    char *run_cmd;
 	    run_cmd = ne_concat("open ", argv[optind], NULL);
 	    add_history(run_cmd);
@@ -499,7 +498,7 @@ static char *read_command(void)
 	sprintf(prompt, "dav:!> ");
     }
 
-    return readline(prompt); 
+    return readline(prompt);
 }
 
 static int execute_command(const char *line)
@@ -530,7 +529,7 @@ static int execute_command(const char *line)
 		    cmd->max_args, cmd->max_args==1?"":"s");
 	} else {
 	    printf(_("The `%s' command takes no arguments"), tokens[0]);
-	}	    
+	}
 	if (cmd->short_help) {
 	    printf(_(":\n" "  %s : %s\n"), cmd->call, cmd->short_help);
 	} else {
@@ -538,7 +537,7 @@ static int execute_command(const char *line)
 	}
     } else if (!session.connected && cmd->needs_connection) {
 	printf(_("The `%s' command can only be used when connected to the server.\n"
-		  "Try running `open' first (see `help open' for more details).\n"), 
+		  "Try running `open' first (see `help open' for more details).\n"),
 		  tokens[0]);
     } else if (cmd->id == cmd_quit) {
 	ret = -1;
@@ -548,8 +547,8 @@ static int execute_command(const char *line)
 	switch (cmd->max_args) {
 	case 0: cmd->handler.take0(); break;
 	case 1: /* tokens[1]==NULL if argcount==0 */
-	    cmd->handler.take1(tokens[1]); break; 
-	case 2: 
+	    cmd->handler.take1(tokens[1]); break;
+	case 2:
 	    if (argcount <=1) {
 		cmd->handler.take2(tokens[1], NULL);
 	    } else {
@@ -625,7 +624,7 @@ static int init_rcfile(void)
 
     f = fopen(rcfile, "r");
     if (f == NULL) {
-        printf(_("Could not read rcfile %s: %s\n"), rcfile, 
+        printf(_("Could not read rcfile %s: %s\n"), rcfile,
 	   strerror(errno));
     } else {
 	for (;;) {
@@ -662,7 +661,7 @@ static char *remote_completion(const char *text, int state)
     static char *last_path;
 
     char *name;
-    
+
     if (state == 0) {
 	/* Check to see if we should refresh the dumb cache.
 	 * or, initialize the local cache of remote filenames
@@ -673,21 +672,21 @@ static char *remote_completion(const char *text, int state)
 	/* TODO get cache expire time from config, currently from cadaver.h
 	 * TODO cache and fetch on deep/absolute paths: (path: /a/b/, text: c/d)
 	 */
-	if (last_fetch < (time(NULL) - COMPLETION_CACHE_EXPIRE) 
-	    || !last_path 
+	if (last_fetch < (time(NULL) - COMPLETION_CACHE_EXPIRE)
+	    || !last_path
 	    || strcmp(session.uri.path, last_path) != 0) {
 
 	    if (last_path != NULL) {
 		free(last_path);
 	    }
 
-	    if (reslist != NULL) { 
-		free_resource_list(reslist); 
+	    if (reslist != NULL) {
+		free_resource_list(reslist);
 	    }
 
 	    /* Hide the connection status */
 	    ne_set_notifier(session.sess, NULL, NULL);
-	    if (fetch_resource_list(session.sess, session.uri.path, 1, 0, 
+	    if (fetch_resource_list(session.sess, session.uri.path, 1, 0,
                                     &reslist) != NE_OK) {
 		reslist = NULL;
 	    }
@@ -727,7 +726,7 @@ static char *remote_completion(const char *text, int state)
 
 	current = current->next;
     }
-    
+
     return NULL;
 }
 
@@ -744,12 +743,12 @@ static char **completion(const char *text, int start, int end)
 	const struct command *cmd;
 	cname[sep - rl_line_buffer] = '\0';
 	cmd = get_command(cname);
-	if (cmd != NULL) { 
+	if (cmd != NULL) {
 	    switch (cmd->scope) {
 	    case parmscope_none:
 		break;
 	    case parmscope_local:
-		matches = rl_completion_matches(text, 
+		matches = rl_completion_matches(text,
 						rl_filename_completion_function);
 		break;
 	    case parmscope_option:
@@ -763,7 +762,7 @@ static char **completion(const char *text, int start, int end)
 	    }
 	}
 	free(cname);
-    }		    
+    }
     return matches;
 }
 
@@ -786,7 +785,7 @@ void output(enum output_type t, const char *fmt, ...)
     vfprintf(stdout, fmt, params);
     va_end(params);
     fflush(stdout);
-    switch (t) { 
+    switch (t) {
     case o_start:
 	out_state = out_incommand;
 	break;
@@ -831,7 +830,7 @@ static void init_options(void)
 {
     char *lockowner, *tmp;
     char *user = getenv("USER"), *hostname = getenv("HOSTNAME");
-    
+
     if (user && hostname) {
 	/* set this here so they can override it */
 	lockowner = ne_concat("mailto:", user, "@", hostname, NULL);
@@ -897,7 +896,7 @@ int main(int argc, char *argv[])
 
     init_signals();
     init_locking();
-    
+
     parse_args(argc, argv);
 
     ret = init_rcfile();
@@ -969,9 +968,9 @@ static void notifier(void *ud, ne_session_status status, const ne_session_status
         case ne_status_recving:
         case ne_status_sending:
             /* Start of transfer: */
-            if ((out_state == out_transfer_download 
+            if ((out_state == out_transfer_download
                  && status == ne_status_recving)
-                || (out_state == out_transfer_upload 
+                || (out_state == out_transfer_upload
                     && status == ne_status_sending)) {
                 if (isatty(STDOUT_FILENO) && info->sr.total > 0) {
                     out_state = out_transfer_pretty;
@@ -982,7 +981,7 @@ static void notifier(void *ud, ne_session_status status, const ne_session_status
                     printf(" [.");
                 }
             }
-            break;                
+            break;
         default:
             break;
 	}
@@ -1024,7 +1023,7 @@ static void notifier(void *ud, ne_session_status status, const ne_session_status
         default:
             break;
 	}
-	break;	
+	break;
     }
     fflush(stdout);
 }
@@ -1032,7 +1031,7 @@ static void notifier(void *ud, ne_session_status status, const ne_session_status
 /* From ncftp.
    This function is (C) 1995 Mike Gleason, (mgleason@NcFTP.com)
  */
-static void 
+static void
 sub_timeval(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 {
     tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
@@ -1044,7 +1043,7 @@ sub_timeval(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 }
 
 /* Smooth progress bar.
- * Doesn't update the bar more than once every 100ms, since this 
+ * Doesn't update the bar more than once every 100ms, since this
  * might give flicker, and would be bad if we are displaying on
  * a slow link anyway.
  */
@@ -1054,7 +1053,7 @@ static void pretty_progress_bar(ne_off_t progress, ne_off_t total)
     double pc;
     static struct timeval last_call = {0};
     struct timeval this_call;
-    
+
     if (total < 0)
 	return;
 
@@ -1103,7 +1102,7 @@ static int supply_creds(const char *prompt, const char *realm, const char *hostn
 	break;
     }
     printf(prompt, realm, hostname);
-    
+
     tmp = readline(_("Username: "));
     if (tmp == NULL) {
 	printf(_("\rAuthentication aborted!\n"));
@@ -1125,9 +1124,9 @@ static int supply_creds(const char *prompt, const char *realm, const char *hostn
 	printf(_("\rPassword too long (>%d)\n"), NE_ABUFSIZ);
 	return -1;
     }
-    
+
     strcpy(password, tmp);
-	
+
     switch (out_state) {
     case out_transfer_download:
     case out_transfer_upload:
@@ -1165,7 +1164,7 @@ static int supply_creds_server(void *userdata, const char *realm, int attempt,
 }
 
 static int supply_creds_proxy(void *userdata, const char *realm, int attempt,
-			      char *username, char *password) 
+			      char *username, char *password)
 {
     if (attempt > 1)
 	return -1;
