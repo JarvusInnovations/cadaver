@@ -11,8 +11,6 @@ pkg_build_deps=(
     core/libiconv
     core/gettext
     core/expat
-
-    core/less
 )
 
 pkg_deps=(
@@ -22,6 +20,11 @@ pkg_deps=(
     core/libxml2
     core/openssl
     core/readline
+
+    # required by added cadaver-put-recursive script
+    core/bash
+    core/findutils
+    core/coreutils
 )
 
 
@@ -39,25 +42,41 @@ do_build() {
 
     make
 }
-# pkg_lib_dirs=(lib)
-# pkg_include_dirs=(include)
-# pkg_bin_dirs=(bin)
-# pkg_pconfig_dirs=(lib/pconfig)
-# pkg_svc_run="bin/haproxy -f $pkg_svc_config_path/haproxy.conf"
-# pkg_exports=(
-#   [host]=srv.address
-#   [port]=srv.port
-#   [ssl-port]=srv.ssl.port
-# )
-# pkg_exposes=(port ssl-port)
-# pkg_binds=(
-#   [database]="port host"
-# )
-# pkg_binds_optional=(
-#   [storage]="port host"
-# )
-# pkg_interpreters=(bin/bash)
-# pkg_svc_user="hab"
-# pkg_svc_group="$pkg_svc_user"
-# pkg_description="Some description."
-# pkg_upstream_url="http://example.com/project-name"
+
+do_install() {
+    do_default_install
+
+    build_line "Adding cadaver-put-recursive command"
+    cat > "$pkg_prefix/bin/cadaver-put-recursive" <<- EOM
+#!$(pkg_path_for bash)/bin/sh
+
+usage () { echo "\$0 <src> <cadaver-args>*" >/dev/stderr; }
+error () { echo "\$1" >/dev/stderr; usage; exit 1; }
+
+test \$# '<' 3 || \
+    error "Source and cadaver arguments expected!";
+
+src="\$1"; shift;
+test -r "\$src" || \
+    error "Source argument should be a readable file or directory!";
+
+cd "\$($(pkg_path_for coreutils)/bin/dirname "\$src")";
+src="\$($(pkg_path_for coreutils)/bin/basename "\$src")";
+root="\$($(pkg_path_for coreutils)/bin/pwd)";
+rc="\$($(pkg_path_for coreutils)/bin/mktemp)";
+{
+    $(pkg_path_for findutils)/bin/find "\$src" '(' -type d -a -readable ')' \
+    -printf 'mkcol "%p"\n';
+    $(pkg_path_for findutils)/bin/find "\$src" '(' -type f -a -readable ')' \
+    -printf 'cd "%h"\nlcd "%h"\n'            \
+    -printf 'mput "%f"\n'                    \
+    -printf 'cd -\nlcd "'"\$root"'"\n';
+    echo "quit";
+} > "\$rc";
+
+${pkg_prefix}/bin/cadaver -r "\$rc" "\$@";
+rm -f "\$rc";
+EOM
+
+    chmod +x "$pkg_prefix/bin/cadaver-put-recursive"
+}
